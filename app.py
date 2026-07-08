@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import sqlite3
 from datetime import datetime
 
-app = Flask(_name_)
+app = Flask(__name__)
 
 def init_db():
     conn = sqlite3.connect("stock.db")
