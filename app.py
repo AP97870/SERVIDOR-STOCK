@@ -41,7 +41,19 @@ def recibir():
         return jsonify({"status": "ok"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+# --- ESTO ES LO QUE DEBES AGREGAR A TU app.py ---
 
+@app.route("/stock", methods=["GET"])
+def obtener_stock():
+    try:
+        conn = sqlite3.connect("stock.db")
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM stock")
+        datos = cur.fetchall()
+        conn.close()
+        return jsonify(datos), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 if __name__ == "__main__":
     init_db()
     app.run(host="0.0.0.0", port=10000)
