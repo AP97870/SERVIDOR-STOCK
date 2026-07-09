@@ -7,14 +7,14 @@ app = Flask(__name__)
 def init_db():
     conn = sqlite3.connect("stock.db")
     cur = conn.cursor()
+    # Eliminado campo 'descripcion' para coincidir con tu tabla real
     cur.execute("""
         CREATE TABLE IF NOT EXISTS stock (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            puesto      TEXT,
-            codigo      TEXT,
-            descripcion TEXT,
-            cantidad    REAL,
-            fecha       TEXT
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            puesto TEXT,
+            codigo TEXT,
+            cantidad REAL,
+            fecha TEXT
         )
     """)
     conn.commit()
@@ -22,44 +22,50 @@ def init_db():
 
 @app.route("/recibir", methods=["POST"])
 def recibir():
-    datos = request.get_json()
-    puesto = datos["puesto"]
-    items  = datos["items"]
-    fecha  = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        datos = request.get_json()
+        puesto = datos["puesto"]
+        items = datos["items"]
+        fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    conn = sqlite3.connect("stock.db")
-    cur  = conn.cursor()
+        conn = sqlite3.connect("stock.db")
+        cur = conn.cursor()
 
-    cur.execute("DELETE FROM stock WHERE puesto = ?", (puesto,))
+        # Usamos una transacción para asegurar la integridad
+        cur.execute("BEGIN TRANSACTION")
+        cur.execute("DELETE FROM stock WHERE puesto = ?", (puesto,))
 
-    for item in items:
-        cur.execute("""
-            INSERT INTO stock (puesto, codigo, descripcion, cantidad, fecha)
-            VALUES (?, ?, ?, ?, ?)
-        """, (puesto, item["codigo"], item["descripcion"], item["cantidad"], fecha))
+        # Preparar los datos para una inserción masiva (mucho más rápido)
+        insert_data = [
+            (puesto, item["codigo"], item["cantidad"], item["fecha"]) 
+            for item in items
+        ]
+        
+        cur.executemany("""
+            INSERT INTO stock (puesto, codigo, cantidad, fecha)
+            VALUES (?, ?, ?, ?)
+        """, insert_data)
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+        conn.close()
 
-    return jsonify({"status": "ok", "puesto": puesto, "items": len(items)})
+        return jsonify({"status": "ok", "puesto": puesto, "items_procesados": len(items)})
+    
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
 
 @app.route("/stock", methods=["GET"])
 def ver_stock():
     conn = sqlite3.connect("stock.db")
-    cur  = conn.cursor()
-    cur.execute("SELECT puesto, codigo, descripcion, cantidad, fecha FROM stock ORDER BY puesto")
+    cur = conn.cursor()
+    cur.execute("SELECT puesto, codigo, cantidad, fecha FROM stock ORDER BY puesto")
     filas = cur.fetchall()
     conn.close()
 
-    resultado = []
-    for f in filas:
-        resultado.append({
-            "puesto": f[0],
-            "codigo": f[1],
-            "descripcion": f[2],
-            "cantidad": f[3],
-            "fecha": f[4]
-        })
+    resultado = [
+        {"puesto": f[0], "codigo": f[1], "cantidad": f[2], "fecha": f[3]} 
+        for f in filas
+    ]
 
     return jsonify(resultado)
 
