@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import sqlite3
 
-app = Flask(_name_)
+app = Flask(__name__)
 
 def init_db():
     conn = sqlite3.connect("stock.db")
@@ -23,10 +23,9 @@ def recibir():
     try:
         datos = request.get_json()
         puesto = datos["puesto"]
-        items  = datos["items"]
-
+        items = datos["items"]
         conn = sqlite3.connect("stock.db")
-        cur  = conn.cursor()
+        cur = conn.cursor()
         cur.execute("DELETE FROM stock WHERE puesto = ?", (puesto,))
         insert_data = [(puesto, i["codigo"], i["cantidad"], i["fecha"]) for i in items]
         cur.executemany("INSERT INTO stock (puesto, codigo, cantidad, fecha) VALUES (?, ?, ?, ?)", insert_data)
@@ -40,7 +39,7 @@ def recibir():
 def obtener_stock():
     try:
         conn = sqlite3.connect("stock.db")
-        cur  = conn.cursor()
+        cur = conn.cursor()
         cur.execute("SELECT * FROM stock")
         datos = cur.fetchall()
         conn.close()
@@ -51,7 +50,7 @@ def obtener_stock():
 @app.route("/ver", methods=["GET"])
 def ver_tabla():
     conn = sqlite3.connect("stock.db")
-    cur  = conn.cursor()
+    cur = conn.cursor()
     cur.execute("SELECT puesto, codigo, cantidad, fecha FROM stock ORDER BY puesto, codigo")
     filas = cur.fetchall()
     conn.close()
@@ -64,7 +63,7 @@ def ver_tabla():
         <style>
             body { font-family: Arial; margin: 20px; background: #f0f0f0; }
             h2 { color: #003366; text-align: center; }
-            p  { text-align: center; color: #555; }
+            p { text-align: center; color: #555; }
             table { border-collapse: collapse; width: 100%; background: white; }
             th { background-color: #003366; color: white; padding: 10px; text-align: center; }
             td { border: 1px solid #ccc; padding: 8px; text-align: center; }
@@ -103,6 +102,6 @@ def ver_tabla():
     """
     return html
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     init_db()
     app.run(host="0.0.0.0", port=10000, debug=False)
