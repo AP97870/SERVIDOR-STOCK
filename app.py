@@ -99,10 +99,15 @@ def ver_tabla():
             </tbody>
         </table>
         <script>
-            $(document).ready( function () {
-                $('#miTablaStock').DataTable({ "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json" } });
-            });
-        </script>
+    $(document).ready( function () {
+        $('#miTablaStock').DataTable({
+            "paging": false,          // <--- ESTO ELIMINA LA PAGINACIÓN
+            "scrollY": "600px",       // <--- ACTIVA EL SCROLL VERTICAL (opcional, para que no sea infinita)
+            "scrollCollapse": true,
+            "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json" }
+        });
+    });
+</script>
     </body>
     </html>
     """
