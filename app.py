@@ -48,18 +48,11 @@ def descargar_csv():
     cur.execute("SELECT puesto, codigo, cantidad, fecha FROM stock")
     filas = cur.fetchall()
     conn.close()
-    
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(['Puesto', 'Codigo', 'Cantidad', 'Fecha'])
-    
-    # Convertimos la cantidad a entero para el Excel
-    filas_corregidas = [
-        (f[0], f[1], int(f[2]) if f[2] is not None else 0, f[3]) 
-        for f in filas
-    ]
-    
-    writer.writerows(filas_corregidas)
+    filas_int = [(f[0], f[1], int(f[2]) if f[2] is not None else 0, f[3]) for f in filas]
+    writer.writerows(filas_int)
     output.seek(0)
     return Response(output, mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=stock_diresa.csv"})
 
@@ -80,44 +73,28 @@ def ver_tabla():
         <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
         <style>
-            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background-color: #f8f9fa; color: #333; }}
+            body {{ font-family: 'Segoe UI', Tahoma, sans-serif; margin: 40px; background-color: #f8f9fa; }}
             h2 {{ color: #2c3e50; border-bottom: 2px solid #2c3e50; padding-bottom: 10px; }}
-            .btn-descarga {{ background-color: #34495e; color: #ffffff; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-weight: 600; display: inline-block; margin-bottom: 20px; font-size: 14px; }}
-            .btn-descarga:hover {{ background-color: #2c3e50; }}
-            
-            /* Ajuste para que respete anchos y no se estire */
-            #miTablaStock {{ 
-                table-layout: fixed; 
-                width: 100%; 
-                border: 1px solid #dee2e6; 
-                border-collapse: collapse; 
-                background: white; 
-            }}
-            #miTablaStock thead th {{ background-color: #ffffff; border-bottom: 2px solid #dee2e6; color: #2c3e50; padding: 12px; text-align: left; text-transform: uppercase; font-size: 13px; }}
+            .btn-descarga {{ background-color: #34495e; color: #ffffff; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-weight: 600; display: inline-block; margin-bottom: 20px; }}
+            #miTablaStock {{ table-layout: fixed; width: 100%; border: 1px solid #dee2e6; background: white; }}
+            #miTablaStock thead th {{ background-color: #ffffff; color: #2c3e50; padding: 12px; text-transform: uppercase; font-size: 13px; text-align: left; }}
             #miTablaStock tbody td {{ padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }}
-            #miTablaStock tbody tr:hover {{ background-color: #f1f1f1; }}
+            /* Elimina flechas de ordenamiento */
+            table.dataTable thead .sorting, table.dataTable thead .sorting_asc, table.dataTable thead .sorting_desc {{ background-image: none !important; cursor: default !important; }}
         </style>
     </head>
     <body>
         <h2>Stock Consolidado - DIRESA 013 Huancavelica</h2>
         <a href="/descargar" class="btn-descarga">📥 Descargar reporte (.csv)</a>
-        
         <table id="miTablaStock" class="display">
             <thead>
-                <tr>
-                    <th>Puesto</th>
-                    <th>Código</th>
-                    <th>Cantidad</th>
-                    <th>Fecha</th>
-                </tr>
+                <tr><th>Puesto</th><th>Código</th><th>Cantidad</th><th>Fecha</th></tr>
             </thead>
             <tbody>
     """
-    
-    # Convertimos la cantidad a entero al construir el HTML
     for f in filas:
-        cantidad_entera = int(f[2]) if f[2] is not None else 0
-        html += f"<tr><td>{f[0]}</td><td>{f[1]}</td><td>{cantidad_entera}</td><td>{f[3]}</td></tr>"
+        cantidad = int(f[2]) if f[2] is not None else 0
+        html += f"<tr><td>{f[0]}</td><td>{f[1]}</td><td>{cantidad}</td><td>{f[3]}</td></tr>"
     
     html += """
             </tbody>
@@ -128,13 +105,8 @@ def ver_tabla():
                     "paging": false,
                     "scrollY": "600px",
                     "scrollCollapse": true,
-                    "autoWidth": false,
-                    "columnDefs": [
-                        { "width": "25%", "targets": 0 }, 
-                        { "width": "25%", "targets": 1 },
-                        { "width": "25%", "targets": 2 },
-                        { "width": "25%", "targets": 3 }
-                    ],
+                    "ordering": false,
+                    "autoWidth": true,
                     "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json" }
                 });
             });
