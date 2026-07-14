@@ -101,10 +101,18 @@ def ver_tabla():
         <script>
     $(document).ready( function () {
         $('#miTablaStock').DataTable({
-            "paging": false,          // <--- ESTO ELIMINA LA PAGINACIÓN
-            "scrollY": "600px",       // <--- ACTIVA EL SCROLL VERTICAL (opcional, para que no sea infinita)
-            "scrollCollapse": true,
-            "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json" }
+                    "paging": false,
+                    "scrollY": "600px",
+                    "scrollCollapse": true,
+                    "autoWidth": false,
+                    "columnDefs": [
+                        { "width": "30%", "targets": 0 }, 
+                        { "width": "20%", "targets": 1 },
+                        { "width": "20%", "targets": 2 },
+                        { "width": "30%", "targets": 3 }
+                    ],
+                    "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json" }
+                });
         });
     });
 </script>
