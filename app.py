@@ -22,7 +22,7 @@ def init_db():
 
 @app.route("/", methods=["GET"])
 def index():
-    return "Servidor DIRESA Huancavelica Activo. Usa /ver para visualizar el Grid."
+    return "Servidor DIRESA Huancavelica Activo. Usa /ver para visualizar el reporte."
 
 @app.route("/recibir", methods=["POST"])
 def recibir():
@@ -67,19 +67,25 @@ def ver_tabla():
     <html>
     <head>
         <meta charset='utf-8'>
-        <title>Stock - DIRESA Huancavelica</title>
+        <title>Reporte de Stock - DIRESA</title>
         <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
         <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
         <style>
-            body {{ font-family: Arial; margin: 20px; background: #f4f7f6; }}
-            h2 {{ color: #003366; }}
-            .btn-descarga {{ background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin-bottom: 20px; }}
+            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background-color: #f8f9fa; color: #333; }}
+            h2 {{ color: #2c3e50; border-bottom: 2px solid #2c3e50; padding-bottom: 10px; }}
+            .btn-descarga {{ background-color: #34495e; color: #ffffff; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-weight: 600; display: inline-block; margin-bottom: 20px; font-size: 14px; }}
+            .btn-descarga:hover {{ background-color: #2c3e50; }}
+            #miTablaStock {{ border: 1px solid #dee2e6; width: 100%; border-collapse: collapse; background: white; }}
+            #miTablaStock thead th {{ background-color: #ffffff; border-bottom: 2px solid #dee2e6; color: #2c3e50; padding: 12px; text-align: left; text-transform: uppercase; font-size: 13px; }}
+            #miTablaStock tbody td {{ padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }}
+            #miTablaStock tbody tr:hover {{ background-color: #f1f1f1; }}
         </style>
     </head>
     <body>
-        <h2>Stock Consolidado - DIRESA Huancavelica</h2>
-        <a href="/descargar" class="btn-descarga">📥 Descargar a Excel (CSV)</a>
+        <h2>Stock Consolidado - DIRESA 013 Huancavelica</h2>
+        <a href="/descargar" class="btn-descarga">📥 Descargar reporte (.csv)</a>
+        
         <table id="miTablaStock" class="display">
             <thead>
                 <tr><th>Puesto</th><th>Código</th><th>Cantidad</th><th>Fecha</th></tr>
