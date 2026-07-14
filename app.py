@@ -2,7 +2,9 @@ from flask import Flask, request, jsonify
 import sqlite3
 
 app = Flask(__name__)
-
+@app.route("/", methods=["GET"])
+def index():
+    return "Servidor de Stock DIRESA activo. Usa /ver para visualizar los datos."
 def init_db():
     conn = sqlite3.connect("stock.db")
     cur = conn.cursor()
