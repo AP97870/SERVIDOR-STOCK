@@ -9,9 +9,12 @@ app = Flask(__name__)
 def init_db():
     conn = sqlite3.connect("stock.db")
     cur = conn.cursor()
-    cur.execute("DROP TABLE IF EXISTS stock")
+    # --- COMENTA O ELIMINA ESTA LÍNEA ---
+    # cur.execute("DROP TABLE IF EXISTS stock") 
+    
+    # Esta línea crea la tabla SOLO si no existe, manteniendo tus datos
     cur.execute("""
-        CREATE TABLE stock (
+        CREATE TABLE IF NOT EXISTS stock (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             puesto TEXT,
             codigo TEXT,
