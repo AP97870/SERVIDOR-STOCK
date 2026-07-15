@@ -9,10 +9,7 @@ app = Flask(__name__)
 def init_db():
     conn = sqlite3.connect("stock.db")
     cur = conn.cursor()
-    # --- COMENTA O ELIMINA ESTA LÍNEA ---
-    # cur.execute("DROP TABLE IF EXISTS stock") 
-    
-    # Esta línea crea la tabla SOLO si no existe, manteniendo tus datos
+    # Esta línea crea la tabla SOLO si no existe, manteniendo tus datos intactos
     cur.execute("""
         CREATE TABLE IF NOT EXISTS stock (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,75 +56,88 @@ def recibir():
 
 @app.route("/descargar")
 def descargar_csv():
-    conn = sqlite3.connect("stock.db")
-    cur = conn.cursor()
-    cur.execute("SELECT puesto, codigo, cantidad, fecha, medregsan, medlote FROM stock")
-    filas = cur.fetchall()
-    conn.close()
-    
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(['Puesto', 'Codigo', 'Cantidad', 'Fecha', 'RegSanitario', 'Lote'])
-    
-    filas_int = [(f[0], f[1], int(f[2]) if f[2] is not None else 0, f[3], f[4], f[5]) for f in filas]
-    writer.writerows(filas_int)
-    output.seek(0)
-    return Response(output, mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=stock_diresa.csv"})
+    try:
+        conn = sqlite3.connect("stock.db")
+        cur = conn.cursor()
+        cur.execute("SELECT puesto, codigo, cantidad, fecha, medregsan, medlote FROM stock")
+        filas = cur.fetchall()
+        conn.close()
+        
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['Puesto', 'Codigo', 'Cantidad', 'Fecha', 'RegSanitario', 'Lote'])
+        
+        filas_int = [(f[0], f[1], int(f[2]) if f[2] is not None else 0, f[3], f[4], f[5]) for f in filas]
+        writer.writerows(filas_int)
+        output.seek(0)
+        return Response(output, mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=stock_diresa.csv"})
+    except Exception as e:
+        return f"Error al generar CSV: {str(e)}", 500
 
 @app.route("/ver", methods=["GET"])
 def ver_tabla():
-    conn = sqlite3.connect("stock.db")
-    cur = conn.cursor()
-    cur.execute("SELECT puesto, codigo, cantidad, fecha, medregsan, medlote FROM stock ORDER BY puesto, codigo")
-    filas = cur.fetchall()
-    conn.close()
+    try:
+        conn = sqlite3.connect("stock.db")
+        cur = conn.cursor()
+        cur.execute("SELECT puesto, codigo, cantidad, fecha, medregsan, medlote FROM stock ORDER BY puesto, codigo")
+        filas = cur.fetchall()
+        conn.close()
 
-    html = f"""
-    <html>
-    <head>
-        <meta charset='utf-8'>
-        <title>Reporte de Stock - DIRESA</title>
-        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
-        <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-        <style>
-            table.dataTable.dtr-inline.collapsed > tbody > tr > td:first-child:before { display: none !important; }
-        </style>
-    </head>
-    <body>
-        <h2>Stock Consolidado - DIRESA 013 Huancavelica</h2>
-        <a href="/descargar">📥 Descargar reporte (.csv)</a>
-        <table id="miTablaStock" class="display">
-            <thead>
-                <tr><th>Puesto</th><th>Código</th><th>Cantidad</th><th>Fecha</th><th>Reg. Sanitario</th><th>Lote</th></tr>
-            </thead>
-            <tbody>
-    """
-    for f in filas:
-        cantidad = int(f[2]) if f[2] is not None else 0
-        # Muestra el código de puesto tal cual llega desde la base de datos
-        html += f"<tr><td>{f[0]}</td><td>{f[1]}</td><td>{cantidad}</td><td>{f[3]}</td><td>{f[4]}</td><td>{f[5]}</td></tr>"
-    
-    html += """
-            </tbody>
-        </table>
-        <script>
-            $(document).ready( function () {
-                $('#miTablaStock').DataTable({
-                    "paging": false,
-                    "scrollY": "600px",
-                    "scrollCollapse": true,
-                    "ordering": false,
-                    "responsive": false,
-                    "columns": [null, null, null, null, null, null],
-                    "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json" }
+        # quitamos la 'f' antes de las triples comillas para evitar conflictos con { CSS / JS }
+        html = """
+        <html>
+        <head>
+            <meta charset='utf-8'>
+            <title>Reporte de Stock - DIRESA</title>
+            <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
+            <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+            <style>
+                table.dataTable.dtr-inline.collapsed > tbody > tr > td:first-child:before { display: none !important; }
+            </style>
+        </head>
+        <body>
+            <h2>Stock Consolidado - DIRESA 013 Huancavelica</h2>
+            <a href="/descargar">📥 Descargar reporte (.csv)</a>
+            <table id="miTablaStock" class="display">
+                <thead>
+                    <tr><th>Puesto</th><th>Código</th><th>Cantidad</th><th>Fecha</th><th>Reg. Sanitario</th><th>Lote</th></tr>
+                </thead>
+                <tbody>
+        """
+        for f in filas:
+            puesto = f[0] if f[0] is not None else ""
+            codigo = f[1] if f[1] is not None else ""
+            cantidad = int(f[2]) if f[2] is not None else 0
+            fecha = f[3] if f[3] is not None else ""
+            regsan = f[4] if f[4] is not None else ""
+            lote = f[5] if f[5] is not None else ""
+            
+            # Aquí sí usamos f-string solo para esta fila específica
+            html += f"<tr><td>{puesto}</td><td>{codigo}</td><td>{cantidad}</td><td>{fecha}</td><td>{regsan}</td><td>{lote}</td></tr>"
+        
+        html += """
+                </tbody>
+            </table>
+            <script>
+                $(document).ready( function () {
+                    $('#miTablaStock').DataTable({
+                        "paging": false,
+                        "scrollY": "600px",
+                        "scrollCollapse": true,
+                        "ordering": false,
+                        "responsive": false,
+                        "columns": [null, null, null, null, null, null],
+                        "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json" }
+                    });
                 });
-            });
-        </script>
-    </body>
-    </html>
-    """
-    return html
+            </script>
+        </body>
+        </html>
+        """
+        return html
+    except Exception as e:
+        return f"Error en la visualización: {str(e)}", 500
 
 if __name__ == "__main__":
     init_db()
