@@ -28,6 +28,9 @@ def index():
 def recibir():
     try:
         datos = request.get_json()
+        import json
+       peso_bytes = len(json.dumps(datos).encode('utf-8'))
+       print(f"DATOS RECIBIDOS: {peso_bytes} bytes (aprox {peso_bytes/1024:.2f} KB)")
         print("DATOS RECIBIDOS:", DATOS)
         puesto = datos["puesto"]
         items = datos["items"]
