@@ -38,9 +38,10 @@ def recibir():
         
         conn = sqlite3.connect("stock.db")
         cur = conn.cursor()
-        cur.execute("DELETE FROM stock WHERE puesto = ?", (puesto,))
         
-        # Insertamos los 6 campos ahora:
+        # --- ELIMINAMOS EL DELETE ---
+        # Al quitar esta línea, ya no se borrará lo que otras postas enviaron previamente.
+        
         insert_data = [
             (puesto, i["codigo"], i["cantidad"], i["fecha"], i["medregsan"], i["medlote"]) 
             for i in items
