@@ -119,6 +119,7 @@ def ver_tabla():
                     "scrollY": "600px",
                     "scrollCollapse": true,
                     "ordering": false,
+                    "responsive": false,
                     "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json" }
                 });
             });
