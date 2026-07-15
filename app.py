@@ -9,7 +9,6 @@ app = Flask(__name__)
 # ==========================================
 # 🔌 CONFIGURACIÓN DE TU BASE DE DATOS SUPABASE
 # ==========================================
-# Se utiliza %25 para representar de forma segura el '%' de tu contraseña real en la URI
 DB_URI = "postgresql://postgres:SERVER4597159AP@db.gmipdeiarpubwcsfhrhk.supabase.co:6543/postgres"
 
 def get_db_connection():
@@ -50,7 +49,12 @@ def recibir():
         puesto = datos["puesto"]
         items = datos["items"]
         
-        conn = get_db_connection()
+        try:
+            conn = get_db_connection()
+        except Exception as db_err:
+            # Si falla la conexión a la base de datos, nos dirá el error exacto aquí
+            return jsonify({"status": "error", "message": f"Fallo de conexion a Base de Datos: {str(db_err)}"}), 500
+            
         cur = conn.cursor()
         
         insert_data = [
@@ -95,7 +99,12 @@ def descargar_csv():
 @app.route("/ver", methods=["GET"])
 def ver_tabla():
     try:
-        conn = get_db_connection()
+        try:
+            conn = get_db_connection()
+        except Exception as db_err:
+            # Captura el error exacto y lo muestra en pantalla en el navegador
+            return f"Error de Conexion a Base de Datos: {str(db_err)}", 500
+
         cur = conn.cursor()
         cur.execute("SELECT puesto, codigo, cantidad, fecha, medregsan, medlote FROM stock ORDER BY puesto, codigo")
         filas = cur.fetchall()
