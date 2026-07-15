@@ -9,13 +9,17 @@ app = Flask(__name__)
 def init_db():
     conn = sqlite3.connect("stock.db")
     cur = conn.cursor()
+    # Borramos la tabla vieja para asegurar que tenga las columnas nuevas
+    cur.execute("DROP TABLE IF EXISTS stock")
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS stock (
+        CREATE TABLE stock (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             puesto TEXT,
             codigo TEXT,
             cantidad REAL,
-            fecha TEXT
+            fecha TEXT,
+            medregsan TEXT,
+            medlote TEXT
         )
     """)
     conn.commit()
@@ -36,7 +40,7 @@ def recibir():
         cur = conn.cursor()
         cur.execute("DELETE FROM stock WHERE puesto = ?", (puesto,))
         
-        # Agregamos los campos nuevos (medregsan, medlote, medfechvto) aquí:
+        # Insertamos los 6 campos ahora:
         insert_data = [
             (puesto, i["codigo"], i["cantidad"], i["fecha"], i["medregsan"], i["medlote"]) 
             for i in items
@@ -57,13 +61,17 @@ def recibir():
 def descargar_csv():
     conn = sqlite3.connect("stock.db")
     cur = conn.cursor()
-    cur.execute("SELECT puesto, codigo, cantidad, fecha FROM stock")
+    # Incluimos los nuevos campos en la descarga
+    cur.execute("SELECT puesto, codigo, cantidad, fecha, medregsan, medlote FROM stock")
     filas = cur.fetchall()
     conn.close()
+    
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(['Puesto', 'Codigo', 'Cantidad', 'Fecha'])
-    filas_int = [(f[0], f[1], int(f[2]) if f[2] is not None else 0, f[3]) for f in filas]
+    writer.writerow(['Puesto', 'Codigo', 'Cantidad', 'Fecha', 'RegSanitario', 'Lote'])
+    
+    # Formateamos la cantidad a entero
+    filas_int = [(f[0], f[1], int(f[2]) if f[2] is not None else 0, f[3], f[4], f[5]) for f in filas]
     writer.writerows(filas_int)
     output.seek(0)
     return Response(output, mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=stock_diresa.csv"})
@@ -72,7 +80,8 @@ def descargar_csv():
 def ver_tabla():
     conn = sqlite3.connect("stock.db")
     cur = conn.cursor()
-    cur.execute("SELECT puesto, codigo, cantidad, fecha FROM stock ORDER BY puesto, codigo")
+    # Consulta actualizada con los nuevos campos
+    cur.execute("SELECT puesto, codigo, cantidad, fecha, medregsan, medlote FROM stock ORDER BY puesto, codigo")
     filas = cur.fetchall()
     conn.close()
 
@@ -91,7 +100,6 @@ def ver_tabla():
             #miTablaStock {{ table-layout: fixed; width: 100%; border: 1px solid #dee2e6; background: white; }}
             #miTablaStock thead th {{ background-color: #ffffff; color: #2c3e50; padding: 12px; text-transform: uppercase; font-size: 13px; text-align: left; }}
             #miTablaStock tbody td {{ padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }}
-            table.dataTable thead .sorting, table.dataTable thead .sorting_asc, table.dataTable thead .sorting_desc {{ background-image: none !important; cursor: default !important; }}
         </style>
     </head>
     <body>
@@ -99,13 +107,13 @@ def ver_tabla():
         <a href="/descargar" class="btn-descarga">📥 Descargar reporte (.csv)</a>
         <table id="miTablaStock" class="display">
             <thead>
-                <tr><th>Puesto</th><th>Código</th><th>Cantidad</th><th>Fecha</th></tr>
+                <tr><th>Puesto</th><th>Código</th><th>Cantidad</th><th>Fecha</th><th>Reg. Sanitario</th><th>Lote</th></tr>
             </thead>
             <tbody>
     """
     for f in filas:
         cantidad = int(f[2]) if f[2] is not None else 0
-        html += f"<tr><td>{f[0]}</td><td>{f[1]}</td><td>{cantidad}</td><td>{f[3]}</td></tr>"
+        html += f"<tr><td>{f[0]}</td><td>{f[1]}</td><td>{cantidad}</td><td>{f[3]}</td><td>{f[4]}</td><td>{f[5]}</td></tr>"
     
     html += """
             </tbody>
@@ -117,7 +125,6 @@ def ver_tabla():
                     "scrollY": "600px",
                     "scrollCollapse": true,
                     "ordering": false,
-                    "autoWidth": true,
                     "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json" }
                 });
             });
