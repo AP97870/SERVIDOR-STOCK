@@ -9,7 +9,7 @@ app = Flask(__name__)
 # ==========================================
 # 🔌 CONFIGURACIÓN DE TU BASE DE DATOS SUPABASE
 # ==========================================
-DB_URI = "postgresql://postgres:SERVER4597159AP@db.gmipdeiarpubwcsfhrhk.supabase.co:5432/postgres?gssencmode=disable"
+DB_URI = "postgresql://postgres.gmipdeiarpubwcsfhrhk:SERVER4597159AP@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require"
 
 def get_db_connection():
     # Establece la conexión directa con Supabase
