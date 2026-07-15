@@ -10,7 +10,7 @@ app = Flask(__name__)
 # 🔌 CONFIGURACIÓN DE TU BASE DE DATOS SUPABASE
 # ==========================================
 # Se utiliza %25 para representar de forma segura el '%' de tu contraseña real en la URI
-DB_URI = "postgresql://postgres:SERVER4597159AP@db.gmipdeiarpubwcsfhrhk.supabase.co:5432/postgres"
+DB_URI = "postgresql://postgres:SERVER4597159AP@db.gmipdeiarpubwcsfhrhk.supabase.co:6543/postgres"
 
 def get_db_connection():
     # Establece la conexión directa con Supabase
