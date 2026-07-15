@@ -3,14 +3,17 @@ import psycopg2
 import csv
 import io
 import json
-
+from urllib.parse import unquote
 app = Flask(__name__)
 
 # ==========================================
 # 🔌 CONFIGURACIÓN DE TU BASE DE DATOS SUPABASE
 # Coloca aquí la URI completa que copiaste y ponle tu contraseña real
 # ==========================================
-DB_URI = "postgresql://postgres:SEVER4895%252A7@db.gmipdeiarpubwcsfhrhk.supabase.co:5432/postgres"
+# Ponemos la contraseña con %2A y Python se encargará de decodificarla de forma segura
+DB_URI_RAW = "postgresql://postgres:SEVER4895%252A7@db.gmipdeiarpubwcsfhrhk.supabase.co:5432/postgres"
+              
+DB_URI = unquote(DB_URI_RAW)
 
 def get_db_connection():
     # Establece la conexión directa con Supabase
