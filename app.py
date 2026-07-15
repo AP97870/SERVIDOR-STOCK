@@ -1,28 +1,43 @@
 from flask import Flask, request, jsonify, Response
-import sqlite3
+import psycopg2
 import csv
 import io
 import json
 
 app = Flask(__name__)
 
+# ==========================================
+# 🔌 CONFIGURACIÓN DE TU BASE DE DATOS SUPABASE
+# Coloca aquí la URI completa que copiaste y ponle tu contraseña real
+# ==========================================
+DB_URI = "TU_URI_DE_SUPABASE_AQUI"
+
+def get_db_connection():
+    # Establece la conexión directa con Supabase
+    return psycopg2.connect(DB_URI)
+
 def init_db():
-    conn = sqlite3.connect("stock.db")
-    cur = conn.cursor()
-    # Esta línea crea la tabla SOLO si no existe, manteniendo tus datos intactos
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS stock (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            puesto TEXT,
-            codigo TEXT,
-            cantidad REAL,
-            fecha TEXT,
-            medregsan TEXT,
-            medlote TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        # En PostgreSQL usamos SERIAL en vez de AUTOINCREMENT para el ID
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS stock (
+                id SERIAL PRIMARY KEY,
+                puesto TEXT,
+                codigo TEXT,
+                cantidad REAL,
+                fecha TEXT,
+                medregsan TEXT,
+                medlote TEXT
+            )
+        """)
+        conn.commit()
+        cur.close()
+        conn.close()
+        print("Base de datos de Supabase inicializada correctamente.")
+    except Exception as e:
+        print(f"Error al inicializar la base de datos: {str(e)}")
 
 @app.route("/", methods=["GET"])
 def index():
@@ -35,7 +50,7 @@ def recibir():
         puesto = datos["puesto"]
         items = datos["items"]
         
-        conn = sqlite3.connect("stock.db")
+        conn = get_db_connection()
         cur = conn.cursor()
         
         insert_data = [
@@ -43,12 +58,14 @@ def recibir():
             for i in items
         ]
         
+        # PostgreSQL utiliza %s como marcadores de parámetros en vez de ?
         cur.executemany("""
             INSERT INTO stock (puesto, codigo, cantidad, fecha, medregsan, medlote) 
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """, insert_data)
         
         conn.commit()
+        cur.close()
         conn.close()
         return jsonify({"status": "ok"}), 200
     except Exception as e:
@@ -57,10 +74,11 @@ def recibir():
 @app.route("/descargar")
 def descargar_csv():
     try:
-        conn = sqlite3.connect("stock.db")
+        conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("SELECT puesto, codigo, cantidad, fecha, medregsan, medlote FROM stock")
         filas = cur.fetchall()
+        cur.close()
         conn.close()
         
         output = io.StringIO()
@@ -77,13 +95,13 @@ def descargar_csv():
 @app.route("/ver", methods=["GET"])
 def ver_tabla():
     try:
-        conn = sqlite3.connect("stock.db")
+        conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("SELECT puesto, codigo, cantidad, fecha, medregsan, medlote FROM stock ORDER BY puesto, codigo")
         filas = cur.fetchall()
+        cur.close()
         conn.close()
 
-        # quitamos la 'f' antes de las triples comillas para evitar conflictos con { CSS / JS }
         html = """
         <html>
         <head>
@@ -113,7 +131,6 @@ def ver_tabla():
             regsan = f[4] if f[4] is not None else ""
             lote = f[5] if f[5] is not None else ""
             
-            # Aquí sí usamos f-string solo para esta fila específica
             html += f"<tr><td>{puesto}</td><td>{codigo}</td><td>{cantidad}</td><td>{fecha}</td><td>{regsan}</td><td>{lote}</td></tr>"
         
         html += """
