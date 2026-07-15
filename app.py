@@ -79,9 +79,6 @@ def ver_tabla():
     filas = cur.fetchall()
     conn.close()
 
-    # --- DICCIONARIO PARA NOMBRES (Edita aquí tus nombres) ---
-    nombres_postas = {"04086F0101": "PUESTO CENTRAL", "OTRO_COD": "PUESTO SECUNDARIO"}
-
     html = f"""
     <html>
     <head>
@@ -105,8 +102,8 @@ def ver_tabla():
     """
     for f in filas:
         cantidad = int(f[2]) if f[2] is not None else 0
-        nombre_mostrado = nombres_postas.get(f[0], f[0])
-        html += f"<tr><td>{nombre_mostrado}</td><td>{f[1]}</td><td>{cantidad}</td><td>{f[3]}</td><td>{f[4]}</td><td>{f[5]}</td></tr>"
+        # Muestra el código de puesto tal cual llega desde la base de datos
+        html += f"<tr><td>{f[0]}</td><td>{f[1]}</td><td>{cantidad}</td><td>{f[3]}</td><td>{f[4]}</td><td>{f[5]}</td></tr>"
     
     html += """
             </tbody>
