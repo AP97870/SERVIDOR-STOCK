@@ -29,18 +29,24 @@ def index():
 def recibir():
     try:
         datos = request.get_json()
-        peso_bytes = len(json.dumps(datos).encode('utf-8'))
-        print(f"DATOS RECIBIDOS: {peso_bytes} bytes (aprox {peso_bytes/1024:.2f} KB)")
-        print("DATOS RECIBIDOS:", datos)
-        
         puesto = datos["puesto"]
         items = datos["items"]
         
         conn = sqlite3.connect("stock.db")
         cur = conn.cursor()
         cur.execute("DELETE FROM stock WHERE puesto = ?", (puesto,))
-        insert_data = [(puesto, i["codigo"], i["cantidad"], i["fecha"]) for i in items]
-        cur.executemany("INSERT INTO stock (puesto, codigo, cantidad, fecha) VALUES (?, ?, ?, ?)", insert_data)
+        
+        # Agregamos los campos nuevos (medregsan, medlote, medfechvto) aquí:
+        insert_data = [
+            (puesto, i["codigo"], i["cantidad"], i["fecha"], i["medregsan"], i["medlote"]) 
+            for i in items
+        ]
+        
+        cur.executemany("""
+            INSERT INTO stock (puesto, codigo, cantidad, fecha, medregsan, medlote) 
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, insert_data)
+        
         conn.commit()
         conn.close()
         return jsonify({"status": "ok"}), 200
