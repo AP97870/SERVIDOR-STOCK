@@ -28,6 +28,7 @@ def index():
 def recibir():
     try:
         datos = request.get_json()
+        print("DATOS RECIBIDOS:", DATOS)
         puesto = datos["puesto"]
         items = datos["items"]
         conn = sqlite3.connect("stock.db")
