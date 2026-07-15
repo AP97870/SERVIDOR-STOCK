@@ -93,14 +93,7 @@ def ver_tabla():
         <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
         <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-        <style>
-            body {{ font-family: 'Segoe UI', Tahoma, sans-serif; margin: 40px; background-color: #f8f9fa; }}
-            h2 {{ color: #2c3e50; border-bottom: 2px solid #2c3e50; padding-bottom: 10px; }}
-            .btn-descarga {{ background-color: #34495e; color: #ffffff; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-weight: 600; display: inline-block; margin-bottom: 20px; }}
-            #miTablaStock {{ table-layout: fixed; width: 100%; border: 1px solid #dee2e6; background: white; }}
-            #miTablaStock thead th {{ background-color: #ffffff; color: #2c3e50; padding: 12px; text-transform: uppercase; font-size: 13px; text-align: left; }}
-            #miTablaStock tbody td {{ padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }}
-        </style>
+       <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='estilo.css') }}">
     </head>
     <body>
         <h2>Stock Consolidado - DIRESA 013 Huancavelica</h2>
