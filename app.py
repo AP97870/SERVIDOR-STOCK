@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, Response
 import sqlite3
 import csv
 import io
+import json
 
 app = Flask(__name__)
 
@@ -28,12 +29,13 @@ def index():
 def recibir():
     try:
         datos = request.get_json()
-        import json
-       peso_bytes = len(json.dumps(datos).encode('utf-8'))
-       print(f"DATOS RECIBIDOS: {peso_bytes} bytes (aprox {peso_bytes/1024:.2f} KB)")
-        print("DATOS RECIBIDOS:", DATOS)
+        peso_bytes = len(json.dumps(datos).encode('utf-8'))
+        print(f"DATOS RECIBIDOS: {peso_bytes} bytes (aprox {peso_bytes/1024:.2f} KB)")
+        print("DATOS RECIBIDOS:", datos)
+        
         puesto = datos["puesto"]
         items = datos["items"]
+        
         conn = sqlite3.connect("stock.db")
         cur = conn.cursor()
         cur.execute("DELETE FROM stock WHERE puesto = ?", (puesto,))
@@ -83,7 +85,6 @@ def ver_tabla():
             #miTablaStock {{ table-layout: fixed; width: 100%; border: 1px solid #dee2e6; background: white; }}
             #miTablaStock thead th {{ background-color: #ffffff; color: #2c3e50; padding: 12px; text-transform: uppercase; font-size: 13px; text-align: left; }}
             #miTablaStock tbody td {{ padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }}
-            /* Elimina flechas de ordenamiento */
             table.dataTable thead .sorting, table.dataTable thead .sorting_asc, table.dataTable thead .sorting_desc {{ background-image: none !important; cursor: default !important; }}
         </style>
     </head>
