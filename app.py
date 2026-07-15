@@ -31,7 +31,7 @@ def init_db():
 def index():
     return "Servidor DIRESA Huancavelica Activo. Usa /ver para visualizar el reporte."
 
-@app.route("/recibir", methods=["POST"])
+@app.route("/recibir", methods=["GET", "POST"])
 def recibir():
     try:
         datos = request.get_json()
