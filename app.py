@@ -6,20 +6,15 @@ import json
 
 app = Flask(__name__)
 
-# ==========================================
-# 🔌 CONFIGURACIÓN DE TU BASE DE DATOS SUPABASE
-# ==========================================
 DB_URI = "postgresql://postgres.gmipdeiarpubwcsfhrhk:SERVER4597159AP@aws-0-ca-central-1.pooler.supabase.com:6543/postgres?sslmode=require"
 
 def get_db_connection():
-    # Establece la conexión directa con Supabase
     return psycopg2.connect(DB_URI)
 
 def init_db():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        # En PostgreSQL usamos SERIAL en vez de AUTOINCREMENT para el ID
         cur.execute("""
             CREATE TABLE IF NOT EXISTS stock (
                 id SERIAL PRIMARY KEY,
@@ -31,42 +26,44 @@ def init_db():
                 medlote TEXT
             )
         """)
+        # Aseguramos que exista la restricción para evitar duplicados
+        cur.execute("""
+            ALTER TABLE stock DROP CONSTRAINT IF EXISTS unique_puesto_codigo_lote;
+            ALTER TABLE stock ADD CONSTRAINT unique_puesto_codigo_lote UNIQUE (puesto, codigo, medlote);
+        """)
         conn.commit()
         cur.close()
         conn.close()
-        print("Base de datos de Supabase inicializada correctamente.")
     except Exception as e:
-        print(f"Error al inicializar la base de datos: {str(e)}")
+        print(f"Error al inicializar: {str(e)}")
 
 @app.route("/", methods=["GET"])
 def index():
-    return "Servidor DIRESA Huancavelica Activo. Usa /ver para visualizar el reporte."
+    return "Servidor DIRESA Huancavelica Activo."
 
-@app.route("/recibir", methods=["GET", "POST"])
+@app.route("/recibir", methods=["POST"])
 def recibir():
     try:
         datos = request.get_json()
         puesto = datos["puesto"]
         items = datos["items"]
         
-        try:
-            conn = get_db_connection()
-        except Exception as db_err:
-            # Si falla la conexión a la base de datos, nos dirá el error exacto aquí
-            return jsonify({"status": "error", "message": f"Fallo de conexion a Base de Datos: {str(db_err)}"}), 500
-            
+        conn = get_db_connection()
         cur = conn.cursor()
         
-        insert_data = [
-            (puesto, i["codigo"], i["cantidad"], i["fecha"], i["medregsan"], i["medlote"]) 
-            for i in items
-        ]
-        
-        # PostgreSQL utiliza %s como marcadores de parámetros en vez de ?
-        cur.executemany("""
-            INSERT INTO stock (puesto, codigo, cantidad, fecha, medregsan, medlote) 
+        # SQL con UPSERT (ON CONFLICT)
+        sql_upsert = """
+            INSERT INTO stock (puesto, codigo, cantidad, fecha, medregsan, medlote)
             VALUES (%s, %s, %s, %s, %s, %s)
-        """, insert_data)
+            ON CONFLICT (puesto, codigo, medlote) 
+            DO UPDATE SET 
+                cantidad = EXCLUDED.cantidad,
+                fecha = EXCLUDED.fecha,
+                medregsan = EXCLUDED.medregsan;
+        """
+        
+        for i in items:
+            cur.execute(sql_upsert, (puesto, i["codigo"], i["cantidad"], i["fecha"], i["medregsan"], i["medlote"]))
         
         conn.commit()
         cur.close()
@@ -74,6 +71,8 @@ def recibir():
         return jsonify({"status": "ok"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+# ... (tus otras rutas /descargar y /ver se mantienen igual) ...
 
 @app.route("/descargar")
 def descargar_csv():
