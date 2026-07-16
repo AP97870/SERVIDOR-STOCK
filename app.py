@@ -23,7 +23,8 @@ def init_db():
                 cantidad REAL,
                 fecha TEXT,
                 medregsan TEXT,
-                medlote TEXT
+                medlote TEXT,
+                fecha_envio DATE
             )
         """)
         # Aseguramos que exista la restricción para evitar duplicados
@@ -59,11 +60,12 @@ def recibir():
             DO UPDATE SET 
                 cantidad = EXCLUDED.cantidad,
                 fecha = EXCLUDED.fecha,
-                medregsan = EXCLUDED.medregsan;
+                medregsan = EXCLUDED.medregsan,
+                fecha_envio = EXCLUDED.fecha_envio;
         """
         
         for i in items:
-            cur.execute(sql_upsert, (puesto, i["codigo"], i["cantidad"], i["fecha"], i["medregsan"], i["medlote"]))
+            cur.execute(sql_upsert, (puesto, i["codigo"], i["cantidad"], i["fecha"], i["medregsan"], i["medlote"], i.get("fecha_envio")))
         
         conn.commit()
         cur.close()
