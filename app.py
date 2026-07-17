@@ -6,6 +6,7 @@ import json
 
 app = Flask(__name__)
 
+# Configuración actualizada con el Connection Pooler de Supabase
 DB_URI = "postgresql://postgres.gmipdeiarpubwcsfhrhk:server4597841@aws-0-ca-central-1.pooler.supabase.com:6543/postgres?sslmode=require"
 
 def get_db_connection():
@@ -114,7 +115,8 @@ def ver_tabla():
         </head>
         <body>
             <h2>Stock Consolidado - DIRESA 013 Huancavelica</h2>
-            <a href="/descargar">📥 Descargar reporte (.csv)</a>
+            <a href="/descargar">📥 Descargar reporte (.csv)</a> | 
+            <a href="/limpiar" style="color:red;" onclick="return confirm('¿Estás seguro de eliminar TODOS los registros?')">🗑️ Limpiar Tabla</a>
             <table id="miTablaStock" class="display">
                 <thead>
                     <tr><th>Puesto</th><th>Código</th><th>Cantidad</th><th>Fecha</th><th>Reg. Sanitario</th><th>Lote</th><th>Fecha Envío</th></tr>
@@ -152,6 +154,7 @@ def ver_tabla():
         return html
     except Exception as e:
         return f"Error en la visualización: {str(e)}", 500
+
 @app.route("/limpiar", methods=["GET"])
 def limpiar_db():
     try:
