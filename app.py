@@ -6,7 +6,7 @@ import json
 
 app = Flask(__name__)
 
-DB_URI = "postgresql://postgres.gmipdeiarpubwcsfhrhk:SERVER4597159AP@aws-0-ca-central-1.pooler.supabase.com:6543/postgres?sslmode=require"
+DB_URI = "postgresql://postgres:server4597841@db.gmipdeiarpubwcsfhrhk.supabase.co:5432/postgres"
 
 def get_db_connection():
     return psycopg2.connect(DB_URI)
