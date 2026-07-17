@@ -152,6 +152,18 @@ def ver_tabla():
         return html
     except Exception as e:
         return f"Error en la visualización: {str(e)}", 500
+@app.route("/limpiar", methods=["GET"])
+def limpiar_db():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM stock")
+        conn.commit()
+        cur.close()
+        conn.close()
+        return "Base de datos limpiada con éxito. <a href='/ver'>Volver al reporte</a>"
+    except Exception as e:
+        return f"Error al limpiar: {str(e)}", 500
 
 if __name__ == "__main__":
     init_db()
