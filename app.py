@@ -168,6 +168,47 @@ def limpiar_db():
     except Exception as e:
         return f"Error al limpiar: {str(e)}", 500
 
+@app.route("/consolidado", methods=["GET"])
+def consolidado():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT s.puesto,
+                   e."NOMBRE_DEL_ESTABLECIMIENTO",
+                   e."RED",
+                   e."MICRORRED",
+                   e."CATEGORIA",
+                   s.codigo, s.cantidad, s.medregsan, s.medlote,
+                   s.fecha, s.fecha_envio
+            FROM stock s
+            LEFT JOIN "ESTABLECIMIENTOS" e
+                   ON e."CODIGO_UNICO"::text = s.puesto
+            ORDER BY s.puesto, s.codigo
+        """)
+        filas = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        data = []
+        for f in filas:
+            data.append({
+                "puesto": f[0] or "",
+                "nombre": f[1] or "",
+                "red": f[2] or "",
+                "microrred": f[3] or "",
+                "categoria": f[4] or "",
+                "codigo": f[5] or "",
+                "cantidad": float(f[6]) if f[6] is not None else 0,
+                "medregsan": f[7] or "",
+                "medlote": f[8] or "",
+                "fecha": f[9] or "",
+                "fecha_envio": str(f[10]) if f[10] is not None else ""
+            })
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 if __name__ == "__main__":
     init_db()
     app.run(host="0.0.0.0", port=10000, debug=False)
