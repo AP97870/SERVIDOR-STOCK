@@ -6,7 +6,6 @@ import json
 
 app = Flask(__name__)
 
-# Configuración actualizada con el Connection Pooler de Supabase
 DB_URI = "postgresql://postgres.gmipdeiarpubwcsfhrhk:server4597841@aws-0-ca-central-1.pooler.supabase.com:6543/postgres?sslmode=require"
 
 def get_db_connection():
@@ -48,24 +47,24 @@ def recibir():
         datos = request.get_json()
         puesto = datos["puesto"]
         items = datos["items"]
-        
+
         conn = get_db_connection()
         cur = conn.cursor()
-        
+
         sql_upsert = """
             INSERT INTO stock (puesto, codigo, cantidad, fecha, medregsan, medlote, fecha_envio)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (puesto, codigo, medlote) 
-            DO UPDATE SET 
+            ON CONFLICT (puesto, codigo, medlote)
+            DO UPDATE SET
                 cantidad = EXCLUDED.cantidad,
                 fecha = EXCLUDED.fecha,
                 medregsan = EXCLUDED.medregsan,
                 fecha_envio = EXCLUDED.fecha_envio;
         """
-        
+
         for i in items:
             cur.execute(sql_upsert, (puesto, i["codigo"], i["cantidad"], i["fecha"], i["medregsan"], i["medlote"], i.get("fecha_envio")))
-        
+
         conn.commit()
         cur.close()
         conn.close()
@@ -82,11 +81,11 @@ def descargar_csv():
         filas = cur.fetchall()
         cur.close()
         conn.close()
-        
+
         output = io.StringIO()
         writer = csv.writer(output)
         writer.writerow(['Puesto', 'Codigo', 'Cantidad', 'Fecha', 'RegSanitario', 'Lote', 'Fecha Envío'])
-        
+
         filas_int = [(f[0], f[1], int(f[2]) if f[2] is not None else 0, f[3], f[4], f[5], f[6]) for f in filas]
         writer.writerows(filas_int)
         output.seek(0)
@@ -115,7 +114,7 @@ def ver_tabla():
         </head>
         <body>
             <h2>Stock Consolidado - DIRESA 013 Huancavelica</h2>
-            <a href="/descargar">📥 Descargar reporte (.csv)</a> | 
+            <a href="/descargar">📥 Descargar reporte (.csv)</a> |
             <a href="/limpiar" style="color:red;" onclick="return confirm('¿Estás seguro de eliminar TODOS los registros?')">🗑️ Limpiar Tabla</a>
             <table id="miTablaStock" class="display">
                 <thead>
@@ -131,9 +130,9 @@ def ver_tabla():
             regsan = f[4] or ""
             lote = f[5] or ""
             fecha_envio = str(f[6]) if f[6] is not None else ""
-            
+
             html += f"<tr><td>{puesto}</td><td>{codigo}</td><td>{cantidad}</td><td>{fecha}</td><td>{regsan}</td><td>{lote}</td><td>{fecha_envio}</td></tr>"
-        
+
         html += """
                 </tbody>
             </table>
@@ -173,7 +172,7 @@ def consolidado():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-                cur.execute("""
+        cur.execute("""
             SELECT s.puesto,
                    e.name,
                    e.red,
