@@ -173,17 +173,16 @@ def consolidado():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("""
+                cur.execute("""
             SELECT s.puesto,
-                   e."NOMBRE_DEL_ESTABLECIMIENTO",
-                   e."RED",
-                   e."MICRORRED",
-                   e."CATEGORIA",
+                   e.name,
+                   e.red,
+                   e.microred,
                    s.codigo, s.cantidad, s.medregsan, s.medlote,
                    s.fecha, s.fecha_envio
             FROM stock s
             LEFT JOIN "ESTABLECIMIENTOS" e
-                   ON e."CODIGO_UNICO"::text = s.puesto
+                   ON e.cod_pre = s.puesto
             ORDER BY s.puesto, s.codigo
         """)
         filas = cur.fetchall()
@@ -197,13 +196,12 @@ def consolidado():
                 "nombre": f[1] or "",
                 "red": f[2] or "",
                 "microrred": f[3] or "",
-                "categoria": f[4] or "",
-                "codigo": f[5] or "",
-                "cantidad": float(f[6]) if f[6] is not None else 0,
-                "medregsan": f[7] or "",
-                "medlote": f[8] or "",
-                "fecha": f[9] or "",
-                "fecha_envio": str(f[10]) if f[10] is not None else ""
+                "codigo": f[4] or "",
+                "cantidad": float(f[5]) if f[5] is not None else 0,
+                "medregsan": f[6] or "",
+                "medlote": f[7] or "",
+                "fecha": f[8] or "",
+                "fecha_envio": str(f[9]) if f[9] is not None else ""
             })
         return jsonify(data), 200
     except Exception as e:
