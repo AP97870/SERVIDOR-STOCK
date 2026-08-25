@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, Response
-import psycopg2
+import psycopg
 import csv
 import io
 import json
@@ -10,7 +10,7 @@ app = Flask(__name__)
 DB_URI = "postgresql://postgres.gmipdeiarpubwcsfhrhk:server4597841@aws-0-ca-central-1.pooler.supabase.com:6543/postgres?sslmode=require"
 
 def get_db_connection():
-    return psycopg2.connect(DB_URI)
+    return psycopg.connect(DB_URI)
 
 def init_db():
     try:
@@ -248,16 +248,16 @@ def estadisticas():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-
+        
         cur.execute("SELECT COUNT(*) FROM stock")
         total_registros = cur.fetchone()[0]
-
+        
         cur.execute("SELECT COUNT(DISTINCT puesto) FROM stock")
         total_puestos = cur.fetchone()[0]
-
+        
         cur.execute("SELECT COUNT(DISTINCT codigo) FROM stock")
         total_productos = cur.fetchone()[0]
-
+        
         cur.execute("""
             SELECT puesto, MAX(fecha_envio) as ult_envio, COUNT(*) as items 
             FROM stock 
@@ -272,10 +272,10 @@ def estadisticas():
                 "ultimo_envio": str(row[1]) if row[1] else "",
                 "items": row[2]
             })
-
+        
         cur.close()
         conn.close()
-
+        
         return jsonify({
             "total_registros": total_registros,
             "total_puestos": total_puestos,
@@ -339,7 +339,7 @@ def resumen_por_estado():
         row = cur.fetchone()
         cur.close()
         conn.close()
-
+        
         return jsonify({
             "desabastecido": row[0] or 0,
             "critico": row[1] or 0,
