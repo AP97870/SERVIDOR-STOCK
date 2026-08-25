@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify, Response
-from flask_cors import CORS
 import psycopg2
 import csv
 import io
@@ -7,7 +6,6 @@ import json
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)
 
 DB_URI = "postgresql://postgres.gmipdeiarpubwcsfhrhk:server4597841@aws-0-ca-central-1.pooler.supabase.com:6543/postgres?sslmode=require"
 
@@ -33,13 +31,16 @@ def init_db():
         """)
         cur.execute("""
             ALTER TABLE stock DROP CONSTRAINT IF EXISTS unique_puesto_codigo_lote;
+        """)
+        cur.execute("""
             ALTER TABLE stock ADD CONSTRAINT unique_puesto_codigo_lote UNIQUE (puesto, codigo, medlote);
         """)
         conn.commit()
         cur.close()
         conn.close()
+        print("[OK] Base de datos inicializada")
     except Exception as e:
-        print(f"Error al inicializar: {str(e)}")
+        print(f"[ERROR] al inicializar DB: {str(e)}")
 
 @app.route("/", methods=["GET"])
 def index():
@@ -47,7 +48,7 @@ def index():
         "servidor": "DIRESA Huancavelica - Red Tayacaja",
         "estado": "activo",
         "timestamp": datetime.now().isoformat(),
-        "endpoints": ["/recibir", "/descargar", "/ver", "/consolidado", "/estadisticas", "/envios-por-puesto", "/resumen-por-estado"]
+        "endpoints": ["/recibir", "/descargar", "/ver", "/consolidado", "/estadisticas", "/envios-por-puesto", "/resumen-por-estado", "/health"]
     })
 
 @app.route("/recibir", methods=["POST"])
@@ -210,9 +211,9 @@ def consolidado():
         cur = conn.cursor()
         cur.execute("""
             SELECT s.puesto,
-                   e.name,
-                   e.red,
-                   e.microred,
+                   COALESCE(e.name, '') as name,
+                   COALESCE(e.red, '') as red,
+                   COALESCE(e.microred, '') as microred,
                    s.codigo, s.cantidad, s.medregsan, s.medlote,
                    s.fecha, s.fecha_envio
             FROM stock s
@@ -244,24 +245,19 @@ def consolidado():
 
 @app.route("/estadisticas", methods=["GET"])
 def estadisticas():
-    """Devuelve estadisticas resumidas del stock"""
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        
-        # Total de registros
+
         cur.execute("SELECT COUNT(*) FROM stock")
         total_registros = cur.fetchone()[0]
-        
-        # Total de puestos unicos
+
         cur.execute("SELECT COUNT(DISTINCT puesto) FROM stock")
         total_puestos = cur.fetchone()[0]
-        
-        # Total de productos unicos
+
         cur.execute("SELECT COUNT(DISTINCT codigo) FROM stock")
         total_productos = cur.fetchone()[0]
-        
-        # Ultimos 10 envios
+
         cur.execute("""
             SELECT puesto, MAX(fecha_envio) as ult_envio, COUNT(*) as items 
             FROM stock 
@@ -276,10 +272,10 @@ def estadisticas():
                 "ultimo_envio": str(row[1]) if row[1] else "",
                 "items": row[2]
             })
-        
+
         cur.close()
         conn.close()
-        
+
         return jsonify({
             "total_registros": total_registros,
             "total_puestos": total_puestos,
@@ -292,13 +288,12 @@ def estadisticas():
 
 @app.route("/envios-por-puesto", methods=["GET"])
 def envios_por_puesto():
-    """Devuelve un resumen por puesto: cuantos items, ultima fecha"""
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
             SELECT s.puesto,
-                   e.name as nombre,
+                   COALESCE(e.name, '') as nombre,
                    COUNT(*) as total_items,
                    SUM(CASE WHEN s.cantidad > 0 THEN 1 ELSE 0 END) as con_stock,
                    MAX(s.fecha_envio) as ult_envio
@@ -330,7 +325,6 @@ def envios_por_puesto():
 
 @app.route("/resumen-por-estado", methods=["GET"])
 def resumen_por_estado():
-    """Agrupa productos por rangos de cantidad para detectar desabastecimiento"""
     try:
         conn = get_db_connection()
         cur = conn.cursor()
@@ -345,7 +339,7 @@ def resumen_por_estado():
         row = cur.fetchone()
         cur.close()
         conn.close()
-        
+
         return jsonify({
             "desabastecido": row[0] or 0,
             "critico": row[1] or 0,
